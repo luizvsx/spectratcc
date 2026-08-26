@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectra-tcc"
+version = "0.1.0"
+description = "Análise de futebol com detecção, rastreamento e identificação de passes."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "Flask",
+    "numpy",
+    "opencv-python",
+    "pandas",
+    "PyYAML",
+    "scikit-learn",
+    "scipy",
+    "supervision==0.26.1",
+    "torch",
+    "tqdm",
+    "ultralytics==8.3.225",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+spectra = "main:cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

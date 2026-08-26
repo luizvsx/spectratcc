@@ -1,0 +1,11 @@
+ultralytics==8.3.225
+supervision==0.26.1
+opencv-python
+numpy
+tqdm
+PyYAML
+scikit-learn
+scipy
+pandas
+Flask
+torch

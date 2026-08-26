@@ -1,0 +1,36 @@
+project:
+  name: "SPECTRA"
+  version: "0.1"
+
+paths:
+  input_videos: "data/videos"
+  output_videos: "outputs"
+  models:
+    player: "data/models/football-player-detection.pt"
+    ball: "data/models/football-ball-detection.pt"
+    pitch: "data/models/football-pitch-detection.pt"
+    sam: "data/models/mobile_sam.pt"
+
+inference:
+  device: "cpu"
+  stride: 10
+
+detection:
+  confidence_threshold: 0.3
+  nms_threshold: 0.7
+
+tracking:
+  bytetrack:
+    min_frames: 3
+
+analysis:
+  pass:
+    proximity_limit: 40
+    min_frames: 2
+    display_frames: 60
+
+team_classification:
+  kmeans_frames: 150
+
+output:
+  save_video: true

@@ -1,0 +1,31 @@
+# Ambientes e caches Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.env
+.env.*
+!.env.example
+
+# Dados gerados e arquivos grandes
+data/models/*.pt
+data/videos/*
+data/uploads/
+outputs/*
+!data/models/.gitkeep
+!data/videos/.gitkeep
+!outputs/.gitkeep
+*.mp4
+*.csv
+
+# Arquivos legados preservados apenas localmente
+lixeira/
+
+# IDE e sistema operacional
+.idea/
+.vscode/
+.DS_Store

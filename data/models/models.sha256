@@ -1,0 +1,4 @@
+deeadd01c74d895d847a4896c52b8f921785f6d1cd4a1911957b61ccb278b986  data/models/football-ball-detection.pt
+e1c3e4c1db253d8900e160064089b5dd77d9cb789aed28de9f7164ede034ecb5  data/models/football-pitch-detection.pt
+4a352ee00e8b23cb515090dfce209711e71524b92679ba33003b833db687dcf0  data/models/football-player-detection.pt
+6dbb90523a35330fedd7f1d3dfc66f995213d81b29a5ca8108dbcdd4e37d6c2f  data/models/mobile_sam.pt

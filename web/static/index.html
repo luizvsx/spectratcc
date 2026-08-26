@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPECTRA — Análise de Futebol</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text-2: #5f5e5a;
+    --text-3: #888780;
+    --accent: #185fa5;
+    --accent-bg: #e6f1fb;
+    --success: #0f6e56;
+    --success-bg: #e1f5ee;
+    --warning: #854f0b;
+    --warning-bg: #faeeda;
+    --radius: 8px;
+    --t0: #378add;
+    --t1: #d85a30;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #2c2c2a;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.18);
+      --text: #e8e6df;
+      --text-2: #b4b2a9;
+      --text-3: #888780;
+      --accent-bg: #0c447c;
+      --success-bg: #085041;
+      --warning-bg: #633806;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .logo {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--accent); }
+
+  .tagline {
+    font-size: 13px;
+    color: var(--text-3);
+    margin-left: 4px;
+  }
+
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .upload-area {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: var(--accent-bg); }
+
+  .upload-area i { font-size: 36px; color: var(--text-3); display: block; margin-bottom: 12px; }
+
+  .upload-area p { color: var(--text-2); font-size: 14px; }
+
+  .upload-area strong { color: var(--accent); cursor: pointer; }
+
+  #file-input { display: none; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+    text-decoration: none;
+  }
+
+  .btn:hover { background: var(--bg); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { opacity: 0.9; background: var(--accent); }
+
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .progress-wrap {
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.4s;
+    animation: indeterminate 1.4s linear infinite;
+  }
+
+  @keyframes indeterminate {
+    0%   { transform: translateX(-100%); width: 60%; }
+    100% { transform: translateX(200%);  width: 60%; }
+  }
+
+  .progress-bar.done { animation: none; width: 100%; background: var(--success); }
+
+  .log-box {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-2);
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-processing { background: var(--warning-bg); color: var(--warning); }
+  .badge-done       { background: var(--success-bg); color: var(--success); }
+  .badge-error      { background: #fcebeb; color: #a32d2d; }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 2px;
+  }
+
+  .t0 { color: var(--t0); }
+  .t1 { color: var(--t1); }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-wrap { position: relative; height: 220px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 0.5px solid var(--border);
+    color: var(--text-2);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .pill-passe-curto { background: var(--accent-bg); color: var(--accent); }
+  .pill-passe-longo { background: var(--warning-bg); color: var(--warning); }
+  .pill-chute       { background: #fcebeb; color: #a32d2d; }
+
+  .actions { display: flex; gap: 8px; margin-top: 1rem; }
+
+  #dashboard { display: none; }
+
+  .section-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .possession-bar {
+    height: 10px;
+    border-radius: 99px;
+    overflow: hidden;
+    display: flex;
+    margin: 8px 0 16px;
+  }
+
+  .poss-t0 { background: var(--t0); transition: width 0.6s; }
+  .poss-t1 { background: var(--t1); transition: width 0.6s; }
+
+  .result-video {
+    width: 100%;
+    max-height: 540px;
+    margin-top: 1rem;
+    border-radius: var(--radius);
+    background: #000;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SPECTRA<span>.</span></div>
+  <div class="tagline">análise estatística de futebol</div>
+</header>
+
+<main>
+
+  <div class="card" id="upload-section">
+    <div class="card-title">Enviar vídeo</div>
+    <div class="upload-area" id="drop-zone">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;color:var(--text-3)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p>Arraste o vídeo aqui ou <strong onclick="document.getElementById('file-input').click()">selecione um arquivo</strong></p>
+      <p style="margin-top:6px;font-size:12px;color:var(--text-3)">MP4, AVI ou MOV — até 2GB</p>
+    </div>
+    <input type="file" id="file-input" accept="video/*">
+    <div id="file-name" style="margin-top:12px;font-size:13px;color:var(--text-2);display:none"></div>
+    <div style="margin-top:1rem">
+      <button class="btn btn-primary" id="btn-processar" disabled onclick="processar()">
+        Processar vídeo
+      </button>
+    </div>
+  </div>
+
+  <div class="card" id="progress-section" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="card-title" style="margin:0">Processando</div>
+      <span class="status-badge badge-processing" id="status-badge">aguardando</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+
+  <div id="dashboard">
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="card-title">Resultado</div>
+          <div id="dash-video-name" style="font-size:13px;color:var(--text-2)"></div>
+        </div>
+        <div class="actions">
+          <a class="btn" id="btn-csv" download>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </a>
+          <a class="btn" id="btn-video" download>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Vídeo
+          </a>
+          <button class="btn" onclick="resetar()">Nova análise</button>
+        </div>
+      </div>
+      <video class="result-video" id="result-video" controls preload="metadata"></video>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Posse de bola</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:6px">
+        <span class="t0" style="font-size:28px;font-weight:500" id="pct-t0">—</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:4px">
+            <span>Time 0</span><span>Time 1</span>
+          </div>
+          <div class="possession-bar">
+            <div class="poss-t0" id="bar-t0" style="width:50%"></div>
+            <div class="poss-t1" id="bar-t1" style="width:50%"></div>
+          </div>
+        </div>
+        <span class="t1" style="font-size:28px;font-weight:500" id="pct-t1">—</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-3);text-align:center" id="duracao-label"></div>
+    </div>
+
+    <div class="metrics-grid" id="metrics-grid"></div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">Eventos por time</div>
+        <div class="chart-wrap"><canvas id="chart-eventos"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Linha do tempo</div>
+        <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Eventos detalhados</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Tempo</th>
+            <th>Time</th>
+            <th>De</th>
+            <th>Para</th>
+            <th>Distância</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-eventos"></tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<script>
+let jobId = null;
+let pollInterval = null;
+let chartEventos = null;
+let chartTimeline = null;
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const btnProcessar = document.getElementById('btn-processar');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+function setFile(f) {
+  document.getElementById('file-name').style.display = 'block';
+  document.getElementById('file-name').textContent = f.name + ' (' + (f.size / 1024 / 1024).toFixed(1) + ' MB)';
+  btnProcessar.disabled = false;
+  btnProcessar._file = f;
+}
+
+async function processar() {
+  const f = btnProcessar._file;
+  if (!f) return;
+
+  btnProcessar.disabled = true;
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
+
+  const form = new FormData();
+  form.append('video', f);
+
+  const res = await fetch('/upload', { method: 'POST', body: form });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+
+  jobId = data.job_id;
+  pollInterval = setInterval(poll, 2000);
+}
+
+async function poll() {
+  if (!jobId) return;
+  const res = await fetch('/status/' + jobId);
+  const data = await res.json();
+
+  const badge = document.getElementById('status-badge');
+  const log = document.getElementById('log-box');
+  const bar = document.getElementById('prog-bar');
+
+  log.innerHTML = data.log.map(l => '<div>' + l + '</div>').join('');
+  log.scrollTop = log.scrollHeight;
+
+  if (data.status === 'processando') {
+    badge.className = 'status-badge badge-processing';
+    badge.textContent = 'processando';
+  }
+
+  if (data.status === 'concluido') {
+    clearInterval(pollInterval);
+    badge.className = 'status-badge badge-done';
+    badge.textContent = 'concluído';
+    bar.classList.add('done');
+    await mostrarDashboard();
+  }
+
+  if (data.status === 'erro') {
+    clearInterval(pollInterval);
+    badge.className = 'status-badge badge-error';
+    badge.textContent = 'erro';
+    bar.style.background = '#e24b4a';
+    if (data.error) log.innerHTML += '<div style="color:#e24b4a">' + data.error + '</div>';
+  }
+}
+
+async function mostrarDashboard() {
+  const res = await fetch('/resultado/' + jobId);
+  const data = await res.json();
+
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('dash-video-name').textContent = data.video_original || '';
+  document.getElementById('btn-csv').href = '/download/csv/' + jobId;
+  document.getElementById('btn-video').href = '/download/video/' + jobId;
+  const resultVideo = document.getElementById('result-video');
+  resultVideo.src = '/preview/video/' + jobId;
+  resultVideo.load();
+
+  const r = data.resumo;
+
+  const pct0 = parseFloat(r['posse_%']?.time_0 || 0);
+  const pct1 = parseFloat(r['posse_%']?.time_1 || 0);
+  document.getElementById('pct-t0').textContent = pct0.toFixed(1) + '%';
+  document.getElementById('pct-t1').textContent = pct1.toFixed(1) + '%';
+  document.getElementById('bar-t0').style.width = pct0 + '%';
+  document.getElementById('bar-t1').style.width = pct1 + '%';
+
+  const dur = parseFloat(r['duracao_video_s']?.total || 0);
+  if (dur) document.getElementById('duracao-label').textContent = 'Duração: ' + dur.toFixed(1) + 's';
+
+  const pc0 = parseInt(r['passes_curtos']?.time_0 || 0);
+  const pc1 = parseInt(r['passes_curtos']?.time_1 || 0);
+  const pl0 = parseInt(r['passes_longos']?.time_0 || 0);
+  const pl1 = parseInt(r['passes_longos']?.time_1 || 0);
+  const ch0 = parseInt(r['chutes']?.time_0 || 0);
+  const ch1 = parseInt(r['chutes']?.time_1 || 0);
+  const pt0 = parseInt(r['passes_total']?.time_0 || 0);
+  const pt1 = parseInt(r['passes_total']?.time_1 || 0);
+
+  const dmp0 = r['dist_media_passe_curto_px']?.time_0 || '—';
+  const dmp1 = r['dist_media_passe_curto_px']?.time_1 || '—';
+
+  const grid = document.getElementById('metrics-grid');
+  grid.innerHTML = [
+    { label: 'Passes totais', v0: pt0, v1: pt1, total: pt0+pt1 },
+    { label: 'Passes curtos', v0: pc0, v1: pc1, total: pc0+pc1 },
+    { label: 'Passes longos', v0: pl0, v1: pl1, total: pl0+pl1 },
+    { label: 'Chutes',        v0: ch0, v1: ch1, total: ch0+ch1 },
+  ].map(m => `
+    <div class="metric">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.total}</div>
+      <div class="metric-sub"><span class="t0">${m.v0}</span> · <span class="t1">${m.v1}</span></div>
+    </div>
+  `).join('');
+
+  renderChartEventos(pc0, pl0, ch0, pc1, pl1, ch1);
+  renderChartTimeline(data.eventos, dur);
+  renderTabela(data.eventos);
+}
+
+function renderChartEventos(pc0, pl0, ch0, pc1, pl1, ch1) {
+  if (chartEventos) chartEventos.destroy();
+  const ctx = document.getElementById('chart-eventos').getContext('2d');
+  chartEventos = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Passe curto', 'Passe longo', 'Chute'],
+      datasets: [
+        { label: 'Time 0', data: [pc0, pl0, ch0], backgroundColor: '#378add88', borderColor: '#378add', borderWidth: 1 },
+        { label: 'Time 1', data: [pc1, pl1, ch1], backgroundColor: '#d85a3088', borderColor: '#d85a30', borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+}
+
+function renderChartTimeline(eventos, dur) {
+  if (chartTimeline) chartTimeline.destroy();
+
+  const t0 = eventos.filter(e => e.time && e.time.includes('0')).map(e => ({ x: parseFloat(e.tempo_s), y: 0.5 }));
+  const t1 = eventos.filter(e => e.time && e.time.includes('1')).map(e => ({ x: parseFloat(e.tempo_s), y: 0.5 }));
+
+  const ctx = document.getElementById('chart-timeline').getContext('2d');
+  chartTimeline = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Time 0', data: t0, backgroundColor: '#378add', pointRadius: 6 },
+        { label: 'Time 1', data: t1, backgroundColor: '#d85a30', pointRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } },
+      scales: {
+        x: { title: { display: true, text: 'Tempo (s)' }, min: 0, max: dur || undefined },
+        y: { display: false, min: 0, max: 1 }
+      }
+    }
+  });
+}
+
+function renderTabela(eventos) {
+  const tbody = document.getElementById('tabela-eventos');
+  const pillClass = { 'PASSE_CURTO': 'pill-passe-curto', 'PASSE_LONGO': 'pill-passe-longo', 'CHUTE': 'pill-chute' };
+  const pillLabel = { 'PASSE_CURTO': 'Passe curto', 'PASSE_LONGO': 'Passe longo', 'CHUTE': 'Chute' };
+
+  tbody.innerHTML = eventos.map(e => `
+    <tr>
+      <td><span class="pill ${pillClass[e.tipo] || ''}">${pillLabel[e.tipo] || e.tipo}</span></td>
+      <td>${parseFloat(e.tempo_s).toFixed(1)}s</td>
+      <td class="${e.time?.includes('0') ? 't0' : 't1'}">${e.time || '—'}</td>
+      <td>#${e.jogador_de || '—'}</td>
+      <td>${e.jogador_para ? '#' + e.jogador_para : '—'}</td>
+      <td>${parseFloat(e.distancia_px || 0).toFixed(0)}px</td>
+    </tr>
+  `).join('');
+}
+
+function resetar() {
+  jobId = null;
+  if (pollInterval) clearInterval(pollInterval);
+  document.getElementById('progress-section').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('file-name').style.display = 'none';
+  document.getElementById('log-box').innerHTML = '';
+  document.getElementById('prog-bar').classList.remove('done');
+  document.getElementById('prog-bar').style.width = '0';
+  btnProcessar.disabled = true;
+  btnProcessar._file = null;
+  const resultVideo = document.getElementById('result-video');
+  resultVideo.pause();
+  resultVideo.removeAttribute('src');
+  resultVideo.load();
+  fileInput.value = '';
+}
+</script>
+</body>
+</html>

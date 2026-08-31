@@ -1,31 +1,40 @@
-# Ambientes e caches Python
+# Ambientes e pacotes locais
 .venv/
 venv/
+tcc_env/
+*.egg-info/
+
+# Python e testes
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
 htmlcov/
-*.egg-info/
-.env
-.env.*
-!.env.example
 
-# Dados gerados e arquivos grandes
-data/models/*.pt
-data/videos/*
-data/uploads/
-outputs/*
-!data/models/.gitkeep
-!data/videos/.gitkeep
-!outputs/.gitkeep
+# Modelos de aprendizado de máquina
+*.pt
+*.pth
+*.onnx
+
+# Vídeos e resultados gerados
 *.mp4
-*.csv
+*.avi
+*.mov
+outputs/
+data/uploads/
+data/outputs/
+data/videos/
 
-# Arquivos legados preservados apenas localmente
+# Resultados de treinamento
+runs/
+meu/treino_4090/
+
+# Arquivos locais e temporários
+*.log
+.env
+.DS_Store
+stats.csv
 lixeira/
 
-# IDE e sistema operacional
-.idea/
-.vscode/
-.DS_Store
+#database
+.env

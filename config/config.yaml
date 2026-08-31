@@ -9,10 +9,10 @@ paths:
     player: "data/models/football-player-detection.pt"
     ball: "data/models/football-ball-detection.pt"
     pitch: "data/models/football-pitch-detection.pt"
-    sam: "data/models/mobile_sam.pt"
+    sam: "mobile_sam.pt"
 
 inference:
-  device: "cpu"
+  device: "cuda"   # você tem GPU
   stride: 10
 
 detection:
@@ -28,6 +28,14 @@ analysis:
     proximity_limit: 40
     min_frames: 2
     display_frames: 60
+  shot:
+    speed_threshold: 30.0
+    proximity_limit: 140.0
+    min_speed_ratio: 2.0
+    confirmation_frames: 3
+    min_progress_px: 45.0
+    direction_consistency: 0.8
+    min_horizontal_ratio: 1.15
 
 team_classification:
   kmeans_frames: 150

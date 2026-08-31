@@ -1,3 +1,10 @@
+# O servidor hal9000 possui driver compatível com CUDA 12.2. Fixamos cu121
+# para impedir que o pip instale uma build mais nova e incompatível do PyTorch.
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1+cu121
+torchvision==0.20.1+cu121
+torchaudio==2.5.1+cu121
+
 ultralytics==8.3.225
 supervision==0.26.1
 opencv-python
@@ -7,5 +14,7 @@ PyYAML
 scikit-learn
 scipy
 pandas
+umap-learn
 Flask
-torch
+pytest
+pytest-cov

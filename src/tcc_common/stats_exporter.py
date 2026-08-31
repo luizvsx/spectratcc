@@ -31,6 +31,9 @@ def save_stats_csv(
             "jogador_de":   p.get("de", ""),
             "jogador_para": p.get("para", ""),
             "distancia_px": p["distancia_px"],
+            "velocidade_px": p.get("velocidade_px", ""),
+            "confianca": p.get("confianca", ""),
+            "frame_confirmacao": p.get("frame_confirmacao", ""),
         })
 
     for s in shots_list:
@@ -42,6 +45,9 @@ def save_stats_csv(
             "jogador_de":   s.get("de", ""),
             "jogador_para": s.get("para", ""),
             "distancia_px": s["distancia_px"],
+            "velocidade_px": s.get("velocidade_px", ""),
+            "confianca": s.get("confianca", ""),
+            "frame_confirmacao": s.get("frame_confirmacao", ""),
         })
 
     eventos.sort(key=lambda e: e["frame"])
@@ -67,11 +73,15 @@ def save_stats_csv(
 
         # Seção 1: Eventos detalhados
         writer.writerow(["## EVENTOS"])
-        writer.writerow(["tipo", "frame", "tempo_s", "time", "jogador_de", "jogador_para", "distancia_px"])
+        writer.writerow([
+            "tipo", "frame", "tempo_s", "time", "jogador_de", "jogador_para",
+            "distancia_px", "velocidade_px", "confianca", "frame_confirmacao",
+        ])
         for ev in eventos:
             writer.writerow([
                 ev["tipo"], ev["frame"], ev["tempo_s"], ev["time"],
                 ev["jogador_de"], ev["jogador_para"], ev["distancia_px"],
+                ev["velocidade_px"], ev["confianca"], ev["frame_confirmacao"],
             ])
         writer.writerow([])
 
@@ -105,6 +115,10 @@ def save_stats_csv(
         ch0 = len(filtrar(todos, "CHUTE", "0"))
         ch1 = len(filtrar(todos, "CHUTE", "1"))
         writer.writerow(["chutes", ch0, ch1, ch0 + ch1])
+
+        cand0 = len(filtrar(todos, "CANDIDATO_CHUTE", "0"))
+        cand1 = len(filtrar(todos, "CANDIDATO_CHUTE", "1"))
+        writer.writerow(["candidatos_chute", cand0, cand1, cand0 + cand1])
 
         # Posse
         writer.writerow(["posse_%", f"{pct0:.1f}", f"{pct1:.1f}", "100.0"])

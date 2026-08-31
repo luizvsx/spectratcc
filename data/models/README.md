@@ -1,11 +1,13 @@
 # Modelos
 
-Coloque neste diretório os quatro pesos exigidos pelo pipeline:
+Coloque neste diretório os três pesos YOLO exigidos pelo pipeline:
 
 - `football-player-detection.pt`
 - `football-ball-detection.pt`
 - `football-pitch-detection.pt`
-- `mobile_sam.pt`
+
+O peso `mobile_sam.pt` deve ficar na raiz do projeto, conforme o layout da
+versão validada no servidor.
 
 Os pesos não fazem parte do Git comum porque alguns ultrapassam o limite de
 arquivo do GitHub. Depois de obtê-los, valide a integridade a partir da raiz:

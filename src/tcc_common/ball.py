@@ -5,6 +5,42 @@ import numpy as np
 import supervision as sv
 
 
+def filter_ball_detections_on_pitch(
+    frame: np.ndarray,
+    detections: sv.Detections,
+    *,
+    patch_radius: int = 18,
+    min_green_ratio: float = 0.2,
+) -> sv.Detections:
+    """Remove candidatos cercados por arquibancada, placas ou outros fundos.
+
+    A bola ocupa poucos pixels; por isso analisamos uma janela ao redor dela e
+    exigimos uma proporção mínima de pixels com aparência de gramado.
+    """
+    if len(detections) == 0:
+        return detections
+
+    height, width = frame.shape[:2]
+    centers = detections.get_anchors_coordinates(sv.Position.CENTER).astype(int)
+    keep = []
+    for center_x, center_y in centers:
+        x1, x2 = max(0, center_x - patch_radius), min(width, center_x + patch_radius + 1)
+        y1, y2 = max(0, center_y - patch_radius), min(height, center_y + patch_radius + 1)
+        patch = frame[y1:y2, x1:x2]
+        if patch.size == 0:
+            keep.append(False)
+            continue
+        hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+        green = (
+            (hsv[:, :, 0] >= 25)
+            & (hsv[:, :, 0] <= 95)
+            & (hsv[:, :, 1] >= 35)
+            & (hsv[:, :, 2] >= 30)
+        )
+        keep.append(float(green.mean()) >= min_green_ratio)
+    return detections[np.asarray(keep, dtype=bool)]
+
+
 class BallAnnotator:
     """
     A class to annotate frames with circles of varying radii and colors.

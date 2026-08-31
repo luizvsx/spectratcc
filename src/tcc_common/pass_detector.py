@@ -44,8 +44,9 @@ class PassDetector:
 
     Classificação de eventos:
     - distancia_px < short_pass_threshold  → PASSE_CURTO
-    - distancia_px < shot_threshold        → PASSE_LONGO
-    - distancia_px >= shot_threshold       → CHUTE
+    - distancia_px >= short_pass_threshold → PASSE_LONGO
+
+    Chutes são responsabilidade do ShotDetector, que analisa a trajetória da bola.
 
     passes_list: contém PASSE_CURTO e PASSE_LONGO
     shots_list:  contém apenas CHUTE
@@ -94,10 +95,7 @@ class PassDetector:
         """Classifica o tipo de evento pela distância entre jogadores."""
         if dist < self.short_pass_threshold:
             return "PASSE_CURTO"
-        elif dist < self.shot_threshold:
-            return "PASSE_LONGO"
-        else:
-            return "CHUTE"
+        return "PASSE_LONGO"
 
     def _threshold(self, player_xyxy: np.ndarray) -> float:
         h = float(player_xyxy[3] - player_xyxy[1])

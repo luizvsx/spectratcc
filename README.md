@@ -1,105 +1,107 @@
 # SPECTRA
 
-Pipeline de análise de partidas de futebol com detecção de jogadores e bola,
-rastreamento, classificação dos times e identificação de passes. Esta versão é
-baseada no antigo `tc5.py`, escolhido como a implementação mais estável do TCC.
+Sistema de visão computacional para análise automática de partidas de futebol. O SPECTRA detecta e rastreia jogadores e bola, classifica os times e produz um vídeo anotado acompanhado de estatísticas de posse, passes e chutes.
 
-## Estrutura
+## Requisitos
 
-```text
-FinalTCC/
-├── config/             # Configuração do pipeline
-├── data/
-│   ├── models/         # Pesos locais (não enviados ao Git)
-│   └── videos/         # Vídeos de entrada (não enviados ao Git)
-├── outputs/            # Vídeos e estatísticas gerados
-├── scripts/            # Comandos auxiliares
-├── src/
-│   ├── main.py         # Ponto de entrada principal
-│   └── tcc_common/     # Detecção, rastreamento e análise
-├── tests/              # Testes automatizados
-└── web/                # Interface Flask e dashboard do CSV
-```
+- Python 3.12
+- GPU compatível com CUDA (recomendada para a análise completa)
+- Modelos em `data/models/` e `mobile_sam.pt`
 
-Arquivos experimentais e versões antigas foram preservados localmente em
-`lixeira/`, que é ignorada pelo Git.
-
-## Instalação
-
-Clone o repositório e execute os comandos sempre a partir da raiz. Nenhum
-caminho pessoal ou absoluto precisa ser editado:
+Instale as dependências em um ambiente virtual:
 
 ```bash
-git clone URL_DO_REPOSITORIO
-cd FinalTCC
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e ".[dev]"
+pip install -r requirements.txt
+pip install -e .
 ```
 
-No Windows, ative o ambiente com `.venv\\Scripts\\activate`.
+O `requirements.txt` fixa o PyTorch 2.5.1 com CUDA 12.1 para manter
+compatibilidade com o driver NVIDIA do servidor `hal9000`. A mesma build pode
+ser usada em CPU quando CUDA não estiver disponível.
 
-Os seguintes modelos devem estar em `data/models/`:
+## Execução pela linha de comando
 
-- `football-player-detection.pt`
-- `football-ball-detection.pt`
-- `football-pitch-detection.pt`
-- `mobile_sam.pt`
-
-Valide os arquivos após o download:
+O pipeline oficial está em `main.py`:
 
 ```bash
-sha256sum -c data/models/models.sha256
-```
-
-Os pesos totalizam aproximadamente 434 MB e não entram no Git comum. Para que
-um clone novo funcione, eles precisam ser publicados com Git LFS ou em uma
-área de downloads e copiados para `data/models/`.
-
-## Execução
-
-```bash
-python3 src/main.py \
+python main.py \
   --source_video_path data/videos/partida.mp4 \
   --target_video_path outputs/resultado.mp4 \
-  --device cpu \
+  --device cuda \
   --mode FULL_ANALYSIS
 ```
 
-Após a instalação editável, o mesmo pipeline pode ser iniciado pelo comando
-`spectra`. Para processar todos os vídeos em `data/videos/`:
+Após `pip install -e .`, o mesmo pipeline também pode ser iniciado pelo comando
+`spectra`, com os mesmos argumentos.
 
-```bash
-bash scripts/run_all_videos.sh
-```
+Os modos disponíveis são `PLAYER_DETECTION`, `BALL_DETECTION`, `PITCH_DETECTION`, `TEAM_CLASSIFICATION` e `FULL_ANALYSIS`.
 
 ## Interface web
 
-A interface permite enviar o vídeo, acompanhar o processamento e visualizar
-os gráficos gerados a partir do CSV de estatísticas:
-
 ```bash
-python3 web/app.py
+python app.py
 ```
 
-Abra `http://localhost:5000`. Em um servidor remoto, encaminhe a porta por SSH:
+Como alternativa, use o comando instalável `spectra-web`.
 
-```bash
-ssh -L 5000:localhost:5000 usuario@servidor
-```
-
-Por padrão o projeto usa CPU, que funciona sem GPU NVIDIA. Para usar CUDA:
-
-```bash
-SPECTRA_DEVICE=cuda python3 web/app.py
-```
-
-No servidor CUDA 12.1, as versões específicas podem ser instaladas com
-`python3 -m pip install -r requirements-cuda121.txt`.
+Acesse `http://localhost:5000`, envie um vídeo e acompanhe o processamento. A interface usa o mesmo pipeline de `main.py`.
 
 ## Testes
 
 ```bash
-python3 -m pytest
+pytest -q
 ```
-# spectratcc
+
+A suíte rápida não carrega modelos nem exige GPU. Para ver cada teste:
+
+```bash
+pytest -v
+```
+
+Para medir a cobertura do código:
+
+```bash
+pytest --cov=spectra --cov=tcc_common --cov-report=term-missing
+```
+
+O teste ponta a ponta é ignorado por padrão. Use um vídeo curto conhecido para
+executar os modelos reais:
+
+```bash
+SPECTRA_TEST_VIDEO=/caminho/partida_curta.mp4 \
+SPECTRA_TEST_DEVICE=cuda \
+pytest -m gpu -v
+```
+
+Prefira um recorte de 2 a 5 segundos; a análise completa é computacionalmente
+pesada. O teste confirma a geração do MP4 e do CSV, mas a qualidade das
+detecções deve ser comparada com eventos anotados manualmente.
+
+Para medir precisão, recall e F1, copie o modelo localizado em
+`tests/fixtures/ground_truth/events_template.csv`, anote os eventos reais e
+compare com o CSV produzido:
+
+```bash
+python scripts/evaluate_events.py \
+  --detected outputs/resultado_stats.csv \
+  --ground-truth minha_anotacao.csv \
+  --tolerance 1.0
+```
+
+## Estrutura
+
+- `src/spectra/`: pacote principal, pipeline, configuração e servidor Flask
+- `src/tcc_common/`: detecção de eventos, rastreamento e classificação
+- `src/tcc_annotators/`: componentes de anotação visual
+- `src/tcc_configs/`: configurações Python compartilhadas
+- `main.py` e `app.py`: pontos de entrada do pipeline e da interface web
+- `spectra_ui/`: interface web
+- `config/config.yaml`: caminhos e parâmetros
+- `tests/`: testes unitários, de integração e métricas
+- `data/models/`: modelos locais ignorados pelo Git
+- `data/videos/`: vídeos locais ignorados pelo Git
+- `outputs/`: resultados locais ignorados pelo Git
+
+Modelos, vídeos, resultados e ambientes virtuais não devem ser versionados devido ao tamanho. Eles permanecem disponíveis localmente.

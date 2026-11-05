@@ -2,6 +2,10 @@
 
 Sistema de visão computacional para análise automática de partidas de futebol. O SPECTRA detecta e rastreia jogadores e bola, classifica os times e produz um vídeo anotado acompanhado de estatísticas de posse, passes e chutes.
 
+## Demonstração
+
+[▶ Assistir à demonstração do SPECTRA](docs/media/demo.mp4)
+
 ## Requisitos
 
 - Python 3.12

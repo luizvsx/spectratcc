@@ -4,12 +4,18 @@ Sistema de visão computacional para análise automática de partidas de futebol
 
 ## Demonstração
 
+https://github.com/user-attachments/assets/0fbb842f-b21c-46e9-9bee-6caca3143a94
+
 [▶ Assistir à demonstração do SPECTRA](docs/media/demo.mp4)
 
 ## Requisitos
 
 - Python 3.12
 - GPU compatível com CUDA (recomendada para a análise completa)
+
+
+
+
 - Modelos em `data/models/` e `mobile_sam.pt`
 
 Instale as dependências em um ambiente virtual:
